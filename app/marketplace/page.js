@@ -1,7 +1,7 @@
    'use client';
    
-   import Navbar from '../../components/Navbar';
-   import { useWeb3 } from '../../context/Web3Context';
+   import Navbar from '../components/Navbar';
+   import { useWeb3 } from '../context/Web3Context';
    
    export default function Marketplace() {
      const { isConnected } = useWeb3();
