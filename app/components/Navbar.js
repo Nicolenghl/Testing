@@ -1,29 +1,14 @@
    'use client';
    
-   import { useState } from 'react';
    import Link from 'next/link';
+   import { useWeb3 } from '../context/Web3Context';
    
    export default function Navbar() {
-     const [account, setAccount] = useState(null);
-     const [isConnected, setIsConnected] = useState(false);
+     const { connect, disconnect, account, isConnected, isRestaurant } = useWeb3();
      
-     const connect = async () => {
-       if (typeof window.ethereum !== 'undefined') {
-         try {
-           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-           setAccount(accounts[0]);
-           setIsConnected(true);
-         } catch (error) {
-           console.error(error);
-         }
-       } else {
-         alert('Please install MetaMask!');
-       }
-     };
-     
-     const disconnect = () => {
-       setAccount(null);
-       setIsConnected(false);
+     const shortenAddress = (address) => {
+       if (!address) return '';
+       return `${address.slice(0, 6)}...${address.slice(-4)}`;
      };
      
      return (
@@ -43,14 +28,22 @@
                      Profile
                    </Link>
                  )}
+                 {isRestaurant && (
+                   <Link href="/restaurant" className="text-base font-medium text-gray-700 hover:text-green-600">
+                     Restaurant Dashboard
+                   </Link>
+                 )}
+                 {!isRestaurant && isConnected && (
+                   <Link href="/register" className="text-base font-medium text-gray-700 hover:text-green-600">
+                     Register Restaurant
+                   </Link>
+                 )}
                </div>
              </div>
              <div className="ml-10 space-x-4">
                {isConnected ? (
                  <div className="flex items-center space-x-4">
-                   <span className="text-sm text-gray-700">
-                     {account ? `${account.slice(0, 6)}...${account.slice(-4)}` : ''}
-                   </span>
+                   <span className="text-sm text-gray-700">{shortenAddress(account)}</span>
                    <button
                      onClick={disconnect}
                      className="inline-block rounded-md border border-transparent bg-red-500 py-2 px-4 text-base font-medium text-white hover:bg-red-600"
