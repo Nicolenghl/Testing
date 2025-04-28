@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // Dynamically import Web3Provider with ssr disabled
 const Web3ProviderNoSSR = dynamic(
-  () => import("./context/Web3Context").then((mod) => mod.Web3Provider),
+  () => import("./context/Web3Context.js").then((mod) => mod.Web3Provider),
   { ssr: false }
 );
 
