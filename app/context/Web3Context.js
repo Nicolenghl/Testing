@@ -16,7 +16,7 @@ const Web3Context = createContext({
 export const useWeb3 = () => useContext(Web3Context);
 
 // Replace with your actual deployed contract address
-const CONTRACT_ADDRESS = '0xYourActualContractAddressHere';
+const CONTRACT_ADDRESS = '0x4C111d82caa78dD55eBbd89CE1D4CdE777Ae27E5';
 
 // Basic ABI for your contract functions
 const CONTRACT_ABI = [
