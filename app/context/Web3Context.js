@@ -15,7 +15,7 @@
    export const useWeb3 = () => useContext(Web3Context);
    
    // Contract address - replace with your deployed contract address
-   const CONTRACT_ADDRESS = '0xYourDeployedContractAddressHere';
+   const CONTRACT_ADDRESS = '0xa0F34A0678692D9CaB997435958effAC4B709582';
    
    export function Web3Provider({ children }) {
      const [account, setAccount] = useState(null);
