@@ -3,6 +3,12 @@
 import './globals.css';
 import { Web3Provider } from './context/Web3Context';
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+
+const Web3ProviderNoSSR = dynamic(
+  () => import("./context/Web3Context").then((mod) => mod.Web3Provider),
+  { ssr: false }
+);
 
 export default function RootLayout({ children }) {
   const [ethersLoaded, setEthersLoaded] = useState(false);
@@ -18,18 +24,18 @@ export default function RootLayout({ children }) {
     const script = document.createElement('script');
     script.src = 'https://cdn.ethers.io/lib/ethers-5.7.umd.min.js';
     script.async = false; // Important: load synchronously
-    
+
     // Set onload handler
     script.onload = () => {
       console.log("Ethers.js loaded successfully");
       setEthersLoaded(true);
     };
-    
+
     // Handle loading errors
     script.onerror = () => {
       console.error("Failed to load ethers.js");
     };
-    
+
     // Add to document
     document.head.appendChild(script);
 
@@ -47,17 +53,17 @@ export default function RootLayout({ children }) {
             {children}
           </Web3Provider>
         ) : (
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
             height: '100vh',
             flexDirection: 'column'
           }}>
             <div style={{ marginBottom: '20px' }}>Loading Web3 libraries...</div>
-            <div style={{ 
-              width: '50px', 
-              height: '50px', 
+            <div style={{
+              width: '50px',
+              height: '50px',
               border: '5px solid #f3f3f3',
               borderTop: '5px solid #3498db',
               borderRadius: '50%',
