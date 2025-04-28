@@ -1,16 +1,10 @@
    'use client';
-   
-   import { createContext, useContext, useState, useEffect } from 'react';
-   
+
+
+   import GreenDishABI from '../contracts/GreenDish.json';
+
    // Create context
-   const Web3Context = createContext({
-     connect: async () => {},
-     disconnect: () => {},
-     account: null,
-     isConnected: false,
-     isRestaurant: false,
-     loading: false
-   });
+   const contract = new ethers.Contract(CONTRACT_ADDRESS, GreenDishABI.abi, signer);
    
    export const useWeb3 = () => useContext(Web3Context);
    
@@ -24,41 +18,60 @@
      const [loading, setLoading] = useState(false);
      
      const connect = async () => {
-       try {
-         setLoading(true);
-         
-         // Check if MetaMask is installed
-         if (typeof window.ethereum === 'undefined') {
-           alert('Please install MetaMask to use this application');
-           return;
-         }
-         
-         // Request accounts
-         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-         const account = accounts[0];
-         
-         setAccount(account);
-         setIsConnected(true);
-         
-         // For now, just randomly set isRestaurant
-         // Later we'll connect to the actual contract
-         setIsRestaurant(Math.random() > 0.5);
-         
-         // Listen for account changes
-         window.ethereum.on('accountsChanged', (accounts) => {
-           setAccount(accounts[0] || null);
-           setIsConnected(Boolean(accounts[0]));
-           if (!accounts[0]) {
-             setIsRestaurant(false);
-           }
-         });
-         
-       } catch (error) {
-         console.error("Error connecting to wallet:", error);
-       } finally {
-         setLoading(false);
-       }
-     };
+  if (typeof window.ethereum === 'undefined') {
+    alert('Please install MetaMask to use this application');
+    return;
+  }
+  
+  try {
+    setLoading(true);
+    
+    // Request accounts
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const account = accounts[0];
+    
+    // Create ethers provider
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+    
+    // Create contract instance
+    const contract = new ethers.Contract(
+      CONTRACT_ADDRESS,
+      contractAbi, // or GreenDishABI.abi if using Option B
+      signer
+    );
+    
+    setProvider(provider);
+    setSigner(signer);
+    setAccount(account);
+    setContract(contract);
+    setIsConnected(true);
+    
+    // Check if connected account is a verified restaurant
+    try {
+      const isVerified = await contract.verifiedRestaurants(account);
+      setIsRestaurant(isVerified);
+    } catch (error) {
+      console.error("Error checking restaurant status:", error);
+      setIsRestaurant(false);
+    }
+    
+    // Event listeners
+    window.ethereum.on('accountsChanged', (accounts) => {
+      setAccount(accounts[0] || null);
+      window.location.reload();
+    });
+    
+    window.ethereum.on('chainChanged', () => {
+      window.location.reload();
+    });
+    
+  } catch (error) {
+    console.error("Error connecting wallet:", error);
+  } finally {
+    setLoading(false);
+  }
+};
      
      const disconnect = () => {
        setAccount(null);
