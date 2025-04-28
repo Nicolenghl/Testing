@@ -61,78 +61,90 @@ export function Web3Provider({ children }) {
   }, []);
   
   const connect = async () => {
-    if (!ethersLoaded) {
-      console.log("Ethers not loaded yet");
-      return;
-    }
+  console.log("Connect function called");
+  
+  // Check if ethers is loaded
+  if (typeof window === 'undefined' || !window.ethers) {
+    console.error("Ethers library not loaded yet");
+    alert("Web3 libraries are still loading. Please try again in a moment.");
+    return;
+  }
+  
+  // Check if MetaMask is installed
+  if (typeof window.ethereum === 'undefined') {
+    console.error("MetaMask not installed");
+    alert('Please install MetaMask to use this application');
+    return;
+  }
+  
+  try {
+    setLoading(true);
+    console.log("Requesting accounts...");
     
-    if (typeof window.ethereum === 'undefined') {
-      alert('Please install MetaMask to use this application');
-      return;
-    }
+    // Request accounts
+    const accounts = await window.ethereum.request({ 
+      method: 'eth_requestAccounts' 
+    });
     
-    try {
-      setLoading(true);
-      
-      // Request accounts access
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      const connectedAccount = accounts[0];
-      
-      // Set up ethers provider
-      const provider = new window.ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner();
-      
-      // Create contract instance
-      const contractInstance = new window.ethers.Contract(
-        CONTRACT_ADDRESS,
-        CONTRACT_ABI,
-        signer
-      );
-      
-      setAccount(connectedAccount);
-      setContract(contractInstance);
-      setIsConnected(true);
-      
-      // Check if the connected account is a restaurant
-      try {
-        const restaurantStatus = await contractInstance.verifiedRestaurants(connectedAccount);
-        setIsRestaurant(restaurantStatus);
-      } catch (error) {
-        console.error("Error checking restaurant status:", error);
-        setIsRestaurant(false);
-      }
-      
-      // Set up event listeners for account changes
-      window.ethereum.on('accountsChanged', (newAccounts) => {
-        if (newAccounts.length === 0) {
-          // User disconnected all accounts
-          disconnect();
-        } else {
-          // User switched accounts
-          setAccount(newAccounts[0]);
-          
-          // Check restaurant status for new account
-          contractInstance.verifiedRestaurants(newAccounts[0])
-            .then(status => setIsRestaurant(status))
-            .catch(err => {
-              console.error("Error checking restaurant status for new account:", err);
-              setIsRestaurant(false);
-            });
-        }
-      });
-      
-      // Set up event listener for chain changes
-      window.ethereum.on('chainChanged', () => {
-        window.location.reload();
-      });
-      
-    } catch (error) {
-      console.error("Error connecting to wallet:", error);
-      alert("Failed to connect wallet. Please try again.");
-    } finally {
+    if (!accounts || accounts.length === 0) {
+      console.error("No accounts returned");
+      alert("Failed to get accounts from MetaMask. Please make sure MetaMask is unlocked.");
       setLoading(false);
+      return;
     }
-  };
+    
+    const connectedAccount = accounts[0];
+    console.log("Connected account:", connectedAccount);
+    
+    // Create provider
+    const provider = new window.ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+    
+    // Set state
+    setAccount(connectedAccount);
+    setIsConnected(true);
+    
+    // Simple contract check first
+    if (CONTRACT_ADDRESS) {
+      try {
+        console.log("Creating contract instance...");
+        const contractInstance = new window.ethers.Contract(
+          CONTRACT_ADDRESS,
+          CONTRACT_ABI,
+          signer
+        );
+        
+        setContract(contractInstance);
+        
+        // Check restaurant status
+        try {
+          const status = await contractInstance.verifiedRestaurants(connectedAccount);
+          setIsRestaurant(status);
+        } catch (err) {
+          console.error("Error checking restaurant status:", err);
+        }
+      } catch (err) {
+        console.error("Error creating contract instance:", err);
+      }
+    }
+    
+    // MetaMask event listeners
+    window.ethereum.on('accountsChanged', (newAccounts) => {
+      console.log("Accounts changed:", newAccounts);
+      if (newAccounts.length === 0) {
+        disconnect();
+      } else {
+        setAccount(newAccounts[0]);
+      }
+    });
+    
+  } catch (error) {
+    console.error("Wallet connection error:", error);
+    alert(`Failed to connect wallet: ${error.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
   
   const disconnect = () => {
     setAccount(null);
